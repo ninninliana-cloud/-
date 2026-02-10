@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>売上報告ツール（商品別・金額集計）</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      max-width: 720px;
+      margin: auto;
+    }
+    h1, h2 {
+      margin-top: 24px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      border-bottom: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background: #f5f5f5;
+    }
+    input {
+      width: 80px;
+      padding: 4px;
+    }
+    button {
+      padding: 8px 14px;
+      margin-top: 12px;
+      cursor: pointer;
+    }
+    #totalAmount {
+      font-size: 1.2em;
+      font-weight: bold;
+      margin-top: 12px;
+    }
+    textarea {
+      width: 100%;
+      height: 140px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>売上報告ツール</h1>
+
+<h2>商品入力</h2>
+
+<table>
+  <tr>
+    <th>商品</th>
+    <th>単価</th>
+    <th>個数</th>
+    <th>金額</th>
+  </tr>
+  <tr data-price="100000"><td>Vape</td><td>100,000</td><td><input type="number" min="0" value="0"></td><td class="amount">0</td></tr>
+  <tr data-price="100000"><td>ウイスキー</td><td>100,000</td><td><input type="number" min="0" value="0"></td><td class="amount">0</td></tr>
+  <tr data-price="200000"><td>パフューム</td><td>200,000</td><td><input type="number" min="0" value="0"></td><td class="amount">0</td></tr>
+  <tr data-price="200000"><td>ポーション</td><td>200,000</td><td><input type="number" min="0" value="0"></td><td class="amount">0</td></tr>
+  <tr data-price="400000"><td>ジュエリー</td><td>400,000</td><td><input type="number" min="0" value="0"></td><td class="amount">0</td></tr>
+  <tr data-price="600000"><td>シャンパン</td><td>600,000</td><td><input type="number" min="0" value="0"></td><td class="amount">0</td></tr>
+</table>
+
+<button onclick="calculateTotal()">合計金額を計算</button>
+<button onclick="exportCSV()">CSV出力</button>
+<button onclick="copyForSpreadsheet()">スプレッドシート用コピー</button>
+
+<div id="totalAmount">合計：0 円</div>
+
+<h2>コピー用（明細）</h2>
+<textarea id="copy"></textarea>
+
+<h2>スプレッドシート用（個数のみ）</h2>
+<textarea id="sheet"></textarea>
+
+<script>
+function calculateTotal() {
+  const rows = document.querySelectorAll('table tr[data-price]');
+  let grandTotal = 0;
+  let copyText = '';
+
+  rows.forEach(row => {
+    const price = Number(row.dataset.price);
+    const qty = Number(row.querySelector('input').value) || 0;
+    const amount = price * qty;
+
+    row.querySelector('.amount').textContent = amount.toLocaleString();
+    grandTotal += amount;
+
+    if (qty > 0) {
+      const name = row.children[0].textContent;
+      copyText += `${name}：${qty} × ${price.toLocaleString()} = ${amount.toLocaleString()}円\n`;
+    }
+  });
+
+  document.getElementById('totalAmount').textContent = `合計：${grandTotal.toLocaleString()} 円`;
+  document.getElementById('copy').value = copyText + `\n合計：${grandTotal.toLocaleString()} 円`;
+}
+
+function exportCSV() {
+  const rows = document.querySelectorAll('table tr[data-price]');
+  // CSV生成（ヘッダなし・1行＝1日時・商品個数は横並び）
+const now = new Date();
+const pad = (n) => String(n).padStart(2, '0');
+const timestamp = `${now.getFullYear()}/${pad(now.getMonth()+1)}/${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+
+// 形式：日時, Vape, ウイスキー, パフューム, ポーション, ジュエリー, シャンパン
+let csv = timestamp;
+products.forEach(p => {
+  csv += `,${p.quantity}`;
+});
+csv += '
+';
+
+// コピー用
+navigator.clipboard.writeText(csv).then(() => {
+  alert('スプレッドシート用にコピーしました');
+});
